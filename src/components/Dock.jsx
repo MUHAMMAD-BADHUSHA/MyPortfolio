@@ -101,10 +101,10 @@ export default function Dock({
   return (
     <motion.div style={{ height, scrollbarWidth: 'none' }} className="dock-outer">
      <GlassSurface 
-  width={400} 
+  width={328} 
    height={80}
    
-   borderRadius={50}
+   borderRadius={20}
    
   >
       <motion.div

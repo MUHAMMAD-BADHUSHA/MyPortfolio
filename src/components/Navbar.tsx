@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import GlassSurface from "./GlassSurface";
+import Dock from "./Dock";
+import { House, User, Code2, FolderGit2, Mail } from "lucide-react";
 
 const navItems = [
   { label: "Home", href: "#hero" },
@@ -12,9 +14,16 @@ const navItems = [
   { label: "Contact", href: "#contact" },
 ];
 
+const dockItems = [
+  { label: "Home", icon: <House size={22} />, href: "#hero" },
+  { label: "About", icon: <User size={22} />, href: "#about" },
+  { label: "Skills", icon: <Code2 size={22} />, href: "#skills" },
+  { label: "Projects", icon: <FolderGit2 size={22} />, href: "#projects" },
+  { label: "Contact", icon: <Mail size={22} />, href: "#contact" },
+];
+
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("hero");
 
   useEffect(() => {
@@ -39,40 +48,46 @@ export default function Navbar() {
     ? "0 8px 32px rgba(0,0,0,0.45), 0 0 0 1px rgba(139,92,246,0.15), 0 0 20px rgba(109,40,217,0.06)"
     : "0 4px 24px rgba(0,0,0,0.30), 0 0 0 1px rgba(139,92,246,0.10), 0 0 12px rgba(109,40,217,0.04)";
 
-  return (
-    <motion.div
-      initial={{ y: -20, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
-      className="fixed top-0 left-0 right-0 z-50 flex justify-center pt-3 sm:pt-4 px-3 sm:px-4"
-    >
-      <GlassSurface
-        width="100%"
-        borderRadius={20}
-        borderWidth={0.04}
-        brightness={52}
-        opacity={scrolled ? 0.92 : 0.85}
-        blur={scrolled ? 18 : 14}
-        backgroundOpacity={0.18}
-        saturation={1.2}
-        distortionScale={-160}
-        redOffset={0}
-        greenOffset={8}
-        blueOffset={18}
-        className="!max-w-5xl"
-        style={{
-          boxShadow: glassShadow,
-          transition: "box-shadow 0.4s ease, border-color 0.3s ease",
-          overflow: "visible",
-        }}
-      >
-        <nav className="flex flex-col w-full">
-          <div className="flex items-center justify-between h-14 sm:h-16 px-3 sm:px-4">
-            <a href="#hero" className="text-base sm:text-lg font-bold tracking-tight shrink-0">
-              <span className="gradient-text">Portfolio</span>
-            </a>
+  const handleNavClick = (href: string) => {
+    const id = href.slice(1);
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: "smooth" });
+  };
 
-            <div className="flex items-center gap-1 sm:gap-2">
+  return (
+    <>
+      <motion.div
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
+        className="fixed top-0 left-0 right-0 z-50 max-md:hidden flex justify-center pt-3 sm:pt-4 px-2 sm:px-4"
+      >
+        <GlassSurface
+          width="100%"
+          borderRadius={20}
+          borderWidth={0.04}
+          brightness={52}
+          opacity={scrolled ? 0.92 : 0.85}
+          blur={scrolled ? 18 : 14}
+          backgroundOpacity={0.18}
+          saturation={1.2}
+          distortionScale={-160}
+          redOffset={0}
+          greenOffset={8}
+          blueOffset={18}
+          className="w-full max-w-5xl!"
+          style={{
+            boxShadow: glassShadow,
+            transition: "box-shadow 0.3s ease, border-color 0.3s ease",
+            overflow: "visible",
+          }}
+        >
+          <nav className="flex flex-col w-full">
+            <div className="flex items-center justify-between min-h-14 sm:min-h-16 px-3 sm:px-4 md:px-5">
+              <a href="#hero" className="text-base sm:text-lg font-bold tracking-tight shrink-0">
+                <span className="gradient-text">Portfolio</span>
+              </a>
+
               <div className="hidden md:flex items-center gap-0.5">
                 {navItems.map((item) => {
                   const isActive = activeSection === item.href.slice(1);
@@ -103,63 +118,25 @@ export default function Navbar() {
                   );
                 })}
               </div>
-
-              <button
-                onClick={() => setMobileOpen(!mobileOpen)}
-                className="md:hidden relative w-10 h-10 flex items-center justify-center rounded-xl hover:bg-white/5 transition-colors shrink-0"
-                aria-label="Toggle menu"
-              >
-                <div className="flex flex-col items-center gap-1">
-                  <motion.span
-                    animate={mobileOpen ? { rotate: 45, y: 4.5 } : { rotate: 0, y: 0 }}
-                    className="block w-5 h-[2px] bg-text-dim rounded-full origin-center"
-                  />
-                  <motion.span
-                    animate={mobileOpen ? { opacity: 0, x: -8 } : { opacity: 1, x: 0 }}
-                    className="block w-4 h-[2px] bg-text-dim/60 rounded-full"
-                  />
-                  <motion.span
-                    animate={mobileOpen ? { rotate: -45, y: -4.5 } : { rotate: 0, y: 0 }}
-                    className="block w-5 h-[2px] bg-text-dim rounded-full origin-center"
-                  />
-                </div>
-              </button>
             </div>
-          </div>
+          </nav>
+        </GlassSurface>
+      </motion.div>
 
-          <AnimatePresence>
-            {mobileOpen && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
-                className="overflow-hidden"
-              >
-                <div className="pt-2 pb-1 space-y-1 border-t border-glass-border px-3 sm:px-4">
-                  {navItems.map((item, i) => (
-                    <motion.a
-                      key={item.href}
-                      href={item.href}
-                      initial={{ opacity: 0, x: -14 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.05 }}
-                      onClick={() => setMobileOpen(false)}
-                      className={`block px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                        activeSection === item.href.slice(1)
-                          ? "bg-primary/15 text-primary-light"
-                          : "text-text-muted hover:text-text hover:bg-white/5"
-                      }`}
-                    >
-                      {item.label}
-                    </motion.a>
-                  ))}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </nav>
-      </GlassSurface>
-    </motion.div>
+      <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden flex justify-center pb-3 sm:pb-4">
+        <Dock
+          items={dockItems.map((item) => ({
+            label: item.label,
+            icon: item.icon,
+            onClick: () => handleNavClick(item.href),
+            className: activeSection === item.href.slice(1) ? "dock-item-active" : "",
+          }))}
+          panelHeight={68}
+          baseItemSize={48}
+          magnification={64}
+          distance={160}
+        />
+      </div>
+    </>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useSyncExternalStore } from "react";
 
 interface Particle {
   x: number; y: number;
@@ -18,7 +18,32 @@ interface Ripple {
 const CURSOR_SIZE = 40;
 const HOVER_SCALE = 1.35;
 
+function getDesktopSnapshot() {
+  if (typeof window === "undefined") return false;
+  return (
+    !window.matchMedia("(pointer: coarse)").matches &&
+    !("ontouchstart" in window) &&
+    navigator.maxTouchPoints === 0
+  );
+}
+
+function getServerSnapshot() {
+  return false;
+}
+
+function subscribeToDesktop(callback: () => void) {
+  const mql = window.matchMedia("(pointer: coarse)");
+  mql.addEventListener("change", callback);
+  return () => mql.removeEventListener("change", callback);
+}
+
 export default function CursorEffect() {
+  const isDesktop = useSyncExternalStore(
+    subscribeToDesktop,
+    getDesktopSnapshot,
+    getServerSnapshot
+  );
+
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const trailRef = useRef<HTMLDivElement>(null);
   const ringRef = useRef<HTMLDivElement>(null);
@@ -30,6 +55,8 @@ export default function CursorEffect() {
   const ripplesRef = useRef<Ripple[]>([]);
 
   useEffect(() => {
+    if (!isDesktop) return;
+
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
@@ -48,24 +75,21 @@ export default function CursorEffect() {
       cursorRef.current = { x: e.clientX, y: e.clientY };
     };
 
-    const spawnBurst = (x: number, y: number, isTouch = false) => {
+    const spawnBurst = (x: number, y: number) => {
       ripplesRef.current.push({ x, y, radius: 0, alpha: 0.5 });
 
-      const count = isTouch
-        ? 12 + Math.floor(Math.random() * 8)
-        : 16 + Math.floor(Math.random() * 12);
+      const count = 16 + Math.floor(Math.random() * 12);
       const hue = 260 + Math.floor(Math.random() * 20);
-      const speedBase = isTouch ? 1 : 1.5;
 
       for (let i = 0; i < count; i++) {
         const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.3;
-        const speed = speedBase + Math.random() * 3;
-        const life = (isTouch ? 30 : 40) + Math.random() * 40;
+        const speed = 1.5 + Math.random() * 3;
+        const life = 40 + Math.random() * 40;
         particlesRef.current.push({
           x, y,
           vx: Math.cos(angle) * speed,
           vy: Math.sin(angle) * speed,
-          size: (isTouch ? 1.5 : 2) + Math.random() * 4,
+          size: 2 + Math.random() * 4,
           alpha: 0.7 + Math.random() * 0.3,
           life, maxLife: life,
           color: `hsla(${hue}, 60%, ${55 + Math.floor(Math.random() * 25)}%,`,
@@ -75,17 +99,9 @@ export default function CursorEffect() {
     };
 
     const handleClick = (e: MouseEvent) => spawnBurst(e.clientX, e.clientY);
-    const handleTouch = (e: TouchEvent) => {
-      const touch = e.touches[0];
-      if (touch) {
-        cursorRef.current = { x: touch.clientX, y: touch.clientY };
-        spawnBurst(touch.clientX, touch.clientY, true);
-      }
-    };
 
     document.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("click", handleClick);
-    window.addEventListener("touchstart", handleTouch, { passive: true });
 
     const hoverEls = document.querySelectorAll<HTMLElement>(
       "a, button, input, textarea, [role='button'], [role='link'], select, label"
@@ -196,7 +212,9 @@ export default function CursorEffect() {
         el.removeEventListener("mouseleave", onHoverOut);
       });
     };
-  }, []);
+  }, [isDesktop]);
+
+  if (!isDesktop) return null;
 
   return (
     <>
@@ -266,13 +284,6 @@ export default function CursorEffect() {
         @keyframes cursor-pulse {
           0%, 100% { opacity: 0.6; }
           50% { opacity: 1; }
-        }
-
-        @media (hover: none) and (pointer: coarse) {
-          body { cursor: auto; }
-          a, button, input, textarea, [role="button"], [role="link"], select, label {
-            cursor: auto;
-          }
         }
       `}</style>
     </>

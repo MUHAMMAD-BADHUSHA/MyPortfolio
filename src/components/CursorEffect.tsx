@@ -55,8 +55,6 @@ export default function CursorEffect() {
   const ripplesRef = useRef<Ripple[]>([]);
 
   useEffect(() => {
-    if (!isDesktop) return;
-
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
@@ -100,45 +98,59 @@ export default function CursorEffect() {
 
     const handleClick = (e: MouseEvent) => spawnBurst(e.clientX, e.clientY);
 
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("click", handleClick);
+    const handleTouch = (e: TouchEvent) => {
+      const touch = e.touches[0];
+      if (touch) {
+        cursorRef.current = { x: touch.clientX, y: touch.clientY };
+        spawnBurst(touch.clientX, touch.clientY);
+      }
+    };
 
-    const hoverEls = document.querySelectorAll<HTMLElement>(
-      "a, button, input, textarea, [role='button'], [role='link'], select, label"
-    );
+    if (isDesktop) {
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("click", handleClick);
+    }
+    window.addEventListener("touchstart", handleTouch, { passive: true });
 
+    let hoverEls: NodeListOf<HTMLElement> | null = null;
     const onHoverIn = () => { isHoveringRef.current = true; };
     const onHoverOut = () => { isHoveringRef.current = false; };
 
-    hoverEls.forEach((el) => {
-      el.addEventListener("mouseenter", onHoverIn);
-      el.addEventListener("mouseleave", onHoverOut);
-    });
-
-    trailPosRef.current = { ...cursorRef.current };
+    if (isDesktop) {
+      hoverEls = document.querySelectorAll<HTMLElement>(
+        "a, button, input, textarea, [role='button'], [role='link'], select, label"
+      );
+      hoverEls.forEach((el) => {
+        el.addEventListener("mouseenter", onHoverIn);
+        el.addEventListener("mouseleave", onHoverOut);
+      });
+      trailPosRef.current = { ...cursorRef.current };
+    }
 
     const animate = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      const cx = cursorRef.current.x;
-      const cy = cursorRef.current.y;
-      const isHovering = isHoveringRef.current;
+      if (isDesktop) {
+        const cx = cursorRef.current.x;
+        const cy = cursorRef.current.y;
+        const isHovering = isHoveringRef.current;
 
-      trailPosRef.current.x += (cx - trailPosRef.current.x) * 0.12;
-      trailPosRef.current.y += (cy - trailPosRef.current.y) * 0.12;
+        trailPosRef.current.x += (cx - trailPosRef.current.x) * 0.12;
+        trailPosRef.current.y += (cy - trailPosRef.current.y) * 0.12;
 
-      const trailEl = trailRef.current;
-      const ringEl = ringRef.current;
-      if (trailEl && ringEl) {
-        const half = CURSOR_SIZE / 2;
-        const scale = isHovering ? HOVER_SCALE : 1;
-        const visible = cx > 0 && cy > 0;
+        const trailEl = trailRef.current;
+        const ringEl = ringRef.current;
+        if (trailEl && ringEl) {
+          const half = CURSOR_SIZE / 2;
+          const scale = isHovering ? HOVER_SCALE : 1;
+          const visible = cx > 0 && cy > 0;
 
-        trailEl.style.transform = `translate(${trailPosRef.current.x - half}px, ${trailPosRef.current.y - half}px) scale(${scale})`;
-        trailEl.style.opacity = visible ? "1" : "0";
+          trailEl.style.transform = `translate(${trailPosRef.current.x - half}px, ${trailPosRef.current.y - half}px) scale(${scale})`;
+          trailEl.style.opacity = visible ? "1" : "0";
 
-        ringEl.style.transform = `translate(${trailPosRef.current.x - half}px, ${trailPosRef.current.y - half}px) scale(${scale})`;
-        ringEl.style.opacity = visible ? "1" : "0";
+          ringEl.style.transform = `translate(${trailPosRef.current.x - half}px, ${trailPosRef.current.y - half}px) scale(${scale})`;
+          ringEl.style.opacity = visible ? "1" : "0";
+        }
       }
 
       const particles = particlesRef.current;
@@ -205,87 +217,94 @@ export default function CursorEffect() {
     return () => {
       cancelAnimationFrame(animationId);
       window.removeEventListener("resize", resize);
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("click", handleClick);
-      hoverEls.forEach((el) => {
-        el.removeEventListener("mouseenter", onHoverIn);
-        el.removeEventListener("mouseleave", onHoverOut);
-      });
+      if (isDesktop) {
+        document.removeEventListener("mousemove", handleMouseMove);
+        document.removeEventListener("click", handleClick);
+        if (hoverEls) {
+          hoverEls.forEach((el) => {
+            el.removeEventListener("mouseenter", onHoverIn);
+            el.removeEventListener("mouseleave", onHoverOut);
+          });
+        }
+      }
+      window.removeEventListener("touchstart", handleTouch);
     };
   }, [isDesktop]);
-
-  if (!isDesktop) return null;
 
   return (
     <>
       <canvas ref={canvasRef} className="fixed inset-0 pointer-events-none z-[60]" />
 
-      <div
-        ref={ringRef}
-        className="fixed pointer-events-none z-[60] transition-opacity duration-300"
-        style={{
-          width: CURSOR_SIZE,
-          height: CURSOR_SIZE,
-          borderRadius: "50%",
-          border: "1.5px solid rgba(139, 92, 246, 0.4)",
-          transform: `translate(-100px, -100px)`,
-          willChange: "transform",
-          boxShadow: `
-            0 0 12px rgba(139, 92, 246, 0.15),
-            0 0 30px rgba(109, 40, 217, 0.08),
-            inset 0 0 12px rgba(139, 92, 246, 0.05)
-          `,
-          transition: "box-shadow 0.3s ease, border-color 0.3s ease",
-        }}
-      >
-        <div
-          className="absolute inset-0 rounded-full"
-          style={{
-            background:
-              "radial-gradient(circle, rgba(139,92,246,0.06) 0%, transparent 70%)",
-            animation: "cursor-pulse 3s ease-in-out infinite",
-          }}
-        />
-      </div>
+      {isDesktop && (
+        <>
+          <div
+            ref={ringRef}
+            className="fixed pointer-events-none z-[60] transition-opacity duration-300"
+            style={{
+              width: CURSOR_SIZE,
+              height: CURSOR_SIZE,
+              borderRadius: "50%",
+              border: "1.5px solid rgba(139, 92, 246, 0.4)",
+              transform: `translate(-100px, -100px)`,
+              willChange: "transform",
+              boxShadow: `
+                0 0 12px rgba(139, 92, 246, 0.15),
+                0 0 30px rgba(109, 40, 217, 0.08),
+                inset 0 0 12px rgba(139, 92, 246, 0.05)
+              `,
+              transition: "box-shadow 0.3s ease, border-color 0.3s ease",
+            }}
+          >
+            <div
+              className="absolute inset-0 rounded-full"
+              style={{
+                background:
+                  "radial-gradient(circle, rgba(139,92,246,0.06) 0%, transparent 70%)",
+                animation: "cursor-pulse 3s ease-in-out infinite",
+              }}
+            />
+          </div>
 
-      <div
-        ref={trailRef}
-        className="fixed pointer-events-none z-[60] transition-opacity duration-300"
-        style={{
-          width: CURSOR_SIZE,
-          height: CURSOR_SIZE,
-          borderRadius: "50%",
-          transform: `translate(-100px, -100px)`,
-          willChange: "transform",
-        }}
-      >
-        <div
-          style={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            width: 8,
-            height: 8,
-            borderRadius: "50%",
-            background: "rgba(139, 92, 246, 0.7)",
-            transform: "translate(-50%, -50%)",
-            boxShadow: "0 0 10px rgba(139, 92, 246, 0.4), 0 0 25px rgba(139, 92, 246, 0.15)",
-          }}
-        />
-      </div>
+          <div
+            ref={trailRef}
+            className="fixed pointer-events-none z-[60] transition-opacity duration-300"
+            style={{
+              width: CURSOR_SIZE,
+              height: CURSOR_SIZE,
+              borderRadius: "50%",
+              transform: `translate(-100px, -100px)`,
+              willChange: "transform",
+            }}
+          >
+            <div
+              style={{
+                position: "absolute",
+                top: "50%",
+                left: "50%",
+                width: 8,
+                height: 8,
+                borderRadius: "50%",
+                background: "rgba(139, 92, 246, 0.7)",
+                transform: "translate(-50%, -50%)",
+                boxShadow: "0 0 10px rgba(139, 92, 246, 0.4), 0 0 25px rgba(139, 92, 246, 0.15)",
+              }}
+            />
+          </div>
 
-      <style>{`
-        body {
-          cursor: none;
-        }
-        a, button, input, textarea, [role="button"], [role="link"], select, label {
-          cursor: none;
-        }
-        @keyframes cursor-pulse {
-          0%, 100% { opacity: 0.6; }
-          50% { opacity: 1; }
-        }
-      `}</style>
+          <style>{`
+            body {
+              cursor: none;
+            }
+            a, button, input, textarea, [role="button"], [role="link"], select, label {
+              cursor: none;
+            }
+            @keyframes cursor-pulse {
+              0%, 100% { opacity: 0.6; }
+              50% { opacity: 1; }
+            }
+          `}</style>
+        </>
+      )}
     </>
   );
 }

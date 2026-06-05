@@ -40,37 +40,37 @@ export default function Navbar() {
     : "0 4px 24px rgba(0,0,0,0.30), 0 0 0 1px rgba(139,92,246,0.10), 0 0 12px rgba(109,40,217,0.04)";
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 flex justify-center pt-3 sm:pt-4 px-3 sm:px-4">
-    <GlassSurface
-      element="nav"
-      width="100%"
-      height="100%"
-      borderRadius={18}
-      borderWidth={0.03}
-      brightness={42}
-      opacity={scrolled ? 0.88 : 0.78}
-      blur={scrolled ? 18 : 14}
-      backgroundOpacity={0.03}
-      saturation={1.15}
-      distortionScale={-140}
-      redOffset={0}
-      greenOffset={8}
-      blueOffset={18}
-      className="!max-w-5xl"
-      style={{
-        boxShadow: glassShadow,
-        transition: "box-shadow 0.4s ease",
-      }}
+    <motion.div
+      initial={{ y: -20, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
+      className="fixed top-0 left-0 right-0 z-50 flex justify-center pt-3 sm:pt-4 px-3 sm:px-4"
     >
-      <div className="w-full px-4 sm:px-6 lg:px-8">
+      <GlassSurface
+        element="nav"
+        width="100%"
+        height="auto"
+        borderRadius={20}
+        borderWidth={0.04}
+        brightness={52}
+        opacity={scrolled ? 0.92 : 0.85}
+        blur={scrolled ? 18 : 14}
+        backgroundOpacity={0.06}
+        saturation={1.2}
+        distortionScale={-160}
+        redOffset={0}
+        greenOffset={8}
+        blueOffset={18}
+        className="!max-w-5xl"
+        style={{
+          boxShadow: glassShadow,
+          transition: "box-shadow 0.4s ease",
+        }}
+      >
         <div className="flex items-center justify-between h-14 sm:h-16">
-          <motion.a
-            href="#hero"
-            whileHover={{ scale: 1.02 }}
-            className="text-base sm:text-lg font-bold tracking-tight shrink-0"
-          >
+          <a href="#hero" className="text-base sm:text-lg font-bold tracking-tight shrink-0">
             <span className="gradient-text">Portfolio</span>
-          </motion.a>
+          </a>
 
           <div className="flex items-center gap-1 sm:gap-2">
             <div className="hidden md:flex items-center gap-0.5">
@@ -106,7 +106,7 @@ export default function Navbar() {
 
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
-              className="md:hidden relative w-10 h-10 flex items-center justify-center rounded-xl hover:bg-glass-hover transition-colors shrink-0 group"
+              className="md:hidden relative w-10 h-10 flex items-center justify-center rounded-xl hover:bg-white/5 transition-colors shrink-0"
               aria-label="Toggle menu"
             >
               <div className="flex flex-col items-center gap-1">
@@ -126,40 +126,39 @@ export default function Navbar() {
             </button>
           </div>
         </div>
-      </div>
 
-      <AnimatePresence>
-        {mobileOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
-            className="overflow-hidden"
-          >
-            <div className="px-4 pb-3 pt-1 space-y-1 border-t border-glass-border">
-              {navItems.map((item, i) => (
-                <motion.a
-                  key={item.href}
-                  href={item.href}
-                  initial={{ opacity: 0, x: -14 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.05 }}
-                  onClick={() => setMobileOpen(false)}
-                  className={`block px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
-                    activeSection === item.href.slice(1)
-                      ? "bg-primary/15 text-primary-light border border-primary/30"
-                      : "text-text-muted hover:text-text hover:bg-glass-hover"
-                  }`}
-                >
-                  {item.label}
-                </motion.a>
-              ))}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </GlassSurface>
-    </div>
+        <AnimatePresence>
+          {mobileOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+              className="overflow-hidden"
+            >
+              <div className="pt-2 pb-1 space-y-1 border-t border-glass-border">
+                {navItems.map((item, i) => (
+                  <motion.a
+                    key={item.href}
+                    href={item.href}
+                    initial={{ opacity: 0, x: -14 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.05 }}
+                    onClick={() => setMobileOpen(false)}
+                    className={`block px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                      activeSection === item.href.slice(1)
+                        ? "bg-primary/15 text-primary-light"
+                        : "text-text-muted hover:text-text hover:bg-white/5"
+                    }`}
+                  >
+                    {item.label}
+                  </motion.a>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </GlassSurface>
+    </motion.div>
   );
 }

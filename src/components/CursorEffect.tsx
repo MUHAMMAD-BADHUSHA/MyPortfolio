@@ -135,8 +135,8 @@ export default function CursorEffect() {
         const cy = cursorRef.current.y;
         const isHovering = isHoveringRef.current;
 
-        trailPosRef.current.x += (cx - trailPosRef.current.x) * 0.12;
-        trailPosRef.current.y += (cy - trailPosRef.current.y) * 0.12;
+        trailPosRef.current.x += (cx - trailPosRef.current.x) * 0.25;
+        trailPosRef.current.y += (cy - trailPosRef.current.y) * 0.25;
 
         const trailEl = trailRef.current;
         const ringEl = ringRef.current;

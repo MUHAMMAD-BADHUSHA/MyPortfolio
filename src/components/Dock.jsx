@@ -102,11 +102,11 @@ export default function Dock({
     <motion.div style={{ height, scrollbarWidth: 'none' }} className="dock-outer">
      <GlassSurface 
   width={400} 
-  height={80}
-  
-  borderRadius={50}
- 
->
+   height={80}
+   
+   borderRadius={50}
+   
+  >
       <motion.div
         onMouseMove={({ pageX }) => {
           isHovered.set(1);

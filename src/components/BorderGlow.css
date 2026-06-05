@@ -139,3 +139,9 @@
   overflow: visible;
   z-index: 1;
 }
+
+@media (max-width: 639px) {
+  .border-glow-card {
+    --glow-padding: 20px;
+  }
+}

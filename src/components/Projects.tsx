@@ -50,7 +50,7 @@ export default function Projects() {
   );
 
   return (
-    <section id="projects" className="relative py-24 sm:py-32 px-4">
+    <section id="projects" className="relative py-24 sm:py-32 px-4 overflow-hidden">
       <div className="max-w-6xl mx-auto">
         <ScrollReveal>
           <div className="text-center mb-16 sm:mb-20">

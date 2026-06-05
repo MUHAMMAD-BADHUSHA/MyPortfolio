@@ -33,7 +33,7 @@ export default function Testimonials() {
   const [current, setCurrent] = useState(0);
 
   return (
-    <section className="relative py-24 sm:py-32 px-4">
+    <section className="relative py-24 sm:py-32 px-4 overflow-hidden">
       <div className="max-w-4xl mx-auto">
         <ScrollReveal>
           <div className="text-center mb-16 sm:mb-20">

@@ -200,7 +200,7 @@ export default function Skills() {
                 {activeCategory === i && (
                   <motion.div
                     layoutId="skill-cat-bg"
-                    className="absolute inset-0 rounded-xl bg-gradient-to-r from-primary to-primary-light"
+                    className="absolute inset-0 rounded-xl bg-linear-to-r from-primary to-primary-light"
                     transition={{ type: "spring", stiffness: 300, damping: 30 }}
                   />
                 )}

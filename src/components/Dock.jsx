@@ -2,12 +2,13 @@
 
 import { motion, useMotionValue, useSpring, useTransform, AnimatePresence } from 'motion/react';
 import { Children, cloneElement, useEffect, useMemo, useRef, useState } from 'react';
-
+import GlassSurface from './GlassSurface';
 import './Dock.css';
 
 function DockItem({ children, className = '', onClick, mouseX, spring, distance, magnification, baseItemSize }) {
   const ref = useRef(null);
   const isHovered = useMotionValue(0);
+ 
 
   const mouseDistance = useTransform(mouseX, val => {
     const rect = ref.current?.getBoundingClientRect() ?? {
@@ -95,9 +96,17 @@ export default function Dock({
   );
   const heightRow = useTransform(isHovered, [0, 1], [panelHeight, maxHeight]);
   const height = useSpring(heightRow, spring);
+  const glassShadow =  "0 4px 24px rgba(0,0,0,0.30), 0 0 0 1px rgba(139,92,246,0.10), 0 0 12px rgba(109,40,217,0.04)";
 
   return (
     <motion.div style={{ height, scrollbarWidth: 'none' }} className="dock-outer">
+     <GlassSurface 
+  width={400} 
+  height={80}
+  
+  borderRadius={50}
+ 
+>
       <motion.div
         onMouseMove={({ pageX }) => {
           isHovered.set(1);
@@ -128,6 +137,7 @@ export default function Dock({
           </DockItem>
         ))}
       </motion.div>
+      </GlassSurface>
     </motion.div>
   );
 }

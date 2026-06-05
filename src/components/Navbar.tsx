@@ -123,7 +123,7 @@ export default function Navbar() {
         </GlassSurface>
       </motion.div>
 
-      <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden flex justify-center pb-3 sm:pb-4">
+      <div className="fixed bottom-4 left-0 right-0 z-50 md:hidden flex justify-center">
         <Dock
           items={dockItems.map((item) => ({
             label: item.label,
@@ -131,10 +131,11 @@ export default function Navbar() {
             onClick: () => handleNavClick(item.href),
             className: activeSection === item.href.slice(1) ? "dock-item-active" : "",
           }))}
-          panelHeight={68}
+          panelHeight={76}
           baseItemSize={48}
-          magnification={64}
+          magnification={48}
           distance={160}
+          dockHeight={76}
         />
       </div>
     </>

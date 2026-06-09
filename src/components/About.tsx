@@ -46,7 +46,7 @@ export default function About() {
       ref={sectionRef}
       className="relative py-24 sm:py-32 px-4 min-h-screen flex items-center overflow-hidden"
     >
-      <AboutScene />
+      <AboutScene inView={isInView} />
 
       <div className="relative z-10 w-full max-w-6xl mx-auto">
         <motion.div

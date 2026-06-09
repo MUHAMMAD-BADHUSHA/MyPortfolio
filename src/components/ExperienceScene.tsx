@@ -26,16 +26,7 @@ function Monolith({ height, position, color, index }: {
     <group position={position}>
       <mesh ref={ref}>
         <boxGeometry args={[0.5, height, 0.5]} />
-        <meshPhysicalMaterial
-          color={c}
-          metalness={0.4}
-          roughness={0.3}
-          transparent
-          opacity={0.15}
-          wireframe
-          emissive={c}
-          emissiveIntensity={0.06}
-        />
+        <meshBasicMaterial color={c} transparent opacity={0.15} wireframe />
       </mesh>
       <mesh ref={glowRef} position={[0, height * 0.45, 0.26]}>
         <planeGeometry args={[0.4, height * 0.85]} />
@@ -46,7 +37,7 @@ function Monolith({ height, position, color, index }: {
 }
 
 function Pathway() {
-  const count = 120;
+  const count = 80;
   const { pos } = useMemo(() => {
     const p = new Float32Array(count * 3);
     for (let i = 0; i < count; i++) {
@@ -83,7 +74,7 @@ function Pathway() {
 }
 
 function ParticleStream() {
-  const count = 400;
+  const count = 200;
   const { pos, cols } = useMemo(() => {
     const p = new Float32Array(count * 3);
     const c = new Float32Array(count * 3);
@@ -101,16 +92,8 @@ function ParticleStream() {
   }, [count]);
 
   const ref = useRef<THREE.Points>(null);
-
-  useFrame(({ clock }) => {
-    if (ref.current) {
-      ref.current.rotation.y += 0.0008;
-      const positions = ref.current.geometry.attributes.position.array as Float32Array;
-      for (let i = 0; i < count; i++) {
-        positions[i * 3 + 1] += Math.sin(clock.elapsedTime * 0.3 + i) * 0.002;
-      }
-      ref.current.geometry.attributes.position.needsUpdate = true;
-    }
+  useFrame((_, delta) => {
+    if (ref.current) ref.current.rotation.y += delta * 0.0005;
   });
 
   return (
@@ -119,7 +102,7 @@ function ParticleStream() {
         <bufferAttribute attach="attributes-position" args={[pos, 3]} />
         <bufferAttribute attach="attributes-color" args={[cols, 3]} />
       </bufferGeometry>
-      <pointsMaterial size={0.05} vertexColors transparent opacity={0.5} blending={THREE.AdditiveBlending} sizeAttenuation />
+      <pointsMaterial size={0.05} vertexColors transparent opacity={0.4} blending={THREE.AdditiveBlending} sizeAttenuation />
     </points>
   );
 }
@@ -135,7 +118,7 @@ function FloatingElements() {
       </Float>
       <Float speed={1.2} rotationIntensity={0.4} floatIntensity={1}>
         <mesh position={[3, 1, -4]} scale={0.2}>
-          <torusKnotGeometry args={[0.8, 0.25, 32, 8]} />
+          <torusKnotGeometry args={[0.8, 0.25, 16, 6]} />
           <meshBasicMaterial color="#7000ff" transparent opacity={0.12} wireframe />
         </mesh>
       </Float>
@@ -161,22 +144,25 @@ function Rings() {
   return (
     <group position={[0, 1.5, -4]}>
       <mesh ref={ref1} rotation={[0.5, 0, 0]}>
-        <torusGeometry args={[2.2, 0.02, 16, 64]} />
+        <torusGeometry args={[2.2, 0.02, 12, 48]} />
         <meshBasicMaterial color="#00f0ff" transparent opacity={0.2} />
       </mesh>
       <mesh ref={ref2} rotation={[1.2, 0.5, 0]}>
-        <torusGeometry args={[2.6, 0.015, 16, 64]} />
+        <torusGeometry args={[2.6, 0.015, 12, 48]} />
         <meshBasicMaterial color="#7000ff" transparent opacity={0.12} />
       </mesh>
     </group>
   );
 }
 
-function SceneContent() {
+function SceneContent({ inView }: { inView: boolean }) {
+  const inViewRef = useRef(inView);
+  inViewRef.current = inView;
   const { pointer } = useThree();
   const groupRef = useRef<THREE.Group>(null);
 
   useFrame(() => {
+    if (!inViewRef.current) return;
     if (groupRef.current) {
       groupRef.current.rotation.x += (pointer.y * 0.02 - groupRef.current.rotation.x) * 0.015;
       groupRef.current.rotation.y += (pointer.x * 0.02 - groupRef.current.rotation.y) * 0.015;
@@ -207,11 +193,12 @@ function SceneContent() {
   );
 }
 
-export default function ExperienceScene() {
+export default function ExperienceScene({ inView = true }: { inView?: boolean }) {
   return (
     <Canvas
       camera={{ position: [0, 0.5, 7], fov: 60 }}
-      gl={{ antialias: true, alpha: true }}
+      gl={{ antialias: false, alpha: true }}
+      dpr={[0.5, 1]}
       style={{
         position: "absolute",
         inset: 0,
@@ -220,7 +207,7 @@ export default function ExperienceScene() {
         pointerEvents: "none",
       }}
     >
-      <SceneContent />
+      <SceneContent inView={inView} />
     </Canvas>
   );
 }

@@ -17,8 +17,8 @@ function Shape({ position, color, type, delay = 0 }: { position: [number, number
   const time = useRef(0);
 
   const geo = useMemo(() => {
-    if (type === "ico") return new THREE.IcosahedronGeometry(0.8, 1);
-    if (type === "torusKnot") return new THREE.TorusKnotGeometry(0.6, 0.25, 64, 8);
+    if (type === "ico") return new THREE.IcosahedronGeometry(0.8, 0);
+    if (type === "torusKnot") return new THREE.TorusKnotGeometry(0.6, 0.25, 32, 6);
     return new THREE.OctahedronGeometry(0.7);
   }, [type]);
 
@@ -27,7 +27,6 @@ function Shape({ position, color, type, delay = 0 }: { position: [number, number
     if (meshRef.current) {
       meshRef.current.rotation.x += delta * 0.3;
       meshRef.current.rotation.y += delta * 0.5;
-      meshRef.current.position.y += Math.sin(time.current * 0.5 + delay) * 0.002;
     }
   });
 
@@ -35,33 +34,18 @@ function Shape({ position, color, type, delay = 0 }: { position: [number, number
     <Float speed={0.6} rotationIntensity={0.15} floatIntensity={0.5}>
       <mesh ref={meshRef} position={position}>
         <primitive object={geo} />
-        <meshPhysicalMaterial
-          color={color}
-          metalness={0.7}
-          roughness={0.2}
-          transparent
-          opacity={0.2}
-          wireframe
-          emissive={color}
-          emissiveIntensity={0.15}
-        />
+        <meshBasicMaterial color={color} transparent opacity={0.2} wireframe />
       </mesh>
       <mesh position={position} scale={0.6}>
         <primitive object={geo} />
-        <meshPhysicalMaterial
-          color={color}
-          metalness={0.3}
-          roughness={0.4}
-          transparent
-          opacity={0.08}
-        />
+        <meshBasicMaterial color={color} transparent opacity={0.08} />
       </mesh>
     </Float>
   );
 }
 
 function ParticleField() {
-  const count = 400;
+  const count = 200;
   const ref = useRef<THREE.Points>(null);
 
   const [positions, colors] = useMemo(() => {
@@ -93,48 +77,19 @@ function ParticleField() {
         <bufferAttribute attach="attributes-position" args={[positions, 3]} />
         <bufferAttribute attach="attributes-color" args={[colors, 3]} />
       </bufferGeometry>
-      <pointsMaterial size={0.08} vertexColors transparent opacity={0.6} blending={THREE.AdditiveBlending} depthWrite={false} sizeAttenuation />
+      <pointsMaterial size={0.08} vertexColors transparent opacity={0.5} blending={THREE.AdditiveBlending} depthWrite={false} sizeAttenuation />
     </points>
   );
 }
 
-function ConnectionLines() {
-  const count = 30;
-  const ref = useRef<THREE.LineSegments>(null);
-
-  const positions = useMemo(() => {
-    const points: number[] = [];
-    for (let i = 0; i < count; i++) {
-      const a = (Math.random() - 0.5) * 12;
-      const b = (Math.random() - 0.5) * 8;
-      const c = (Math.random() - 0.5) * 6;
-      const d = (Math.random() - 0.5) * 12;
-      const e = (Math.random() - 0.5) * 8;
-      const f = (Math.random() - 0.5) * 6;
-      points.push(a, b, c, d, e, f);
-    }
-    return new Float32Array(points);
-  }, []);
-
-  useFrame((_, delta) => {
-    if (ref.current) ref.current.rotation.y += delta * 0.02;
-  });
-
-  return (
-    <lineSegments ref={ref}>
-      <bufferGeometry>
-        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
-      </bufferGeometry>
-      <lineBasicMaterial color={COLORS.cyan} transparent opacity={0.06} />
-    </lineSegments>
-  );
-}
-
-function SceneContent() {
+function SceneContent({ inView }: { inView: boolean }) {
+  const inViewRef = useRef(inView);
+  inViewRef.current = inView;
   const { pointer } = useThree();
   const groupRef = useRef<THREE.Group>(null);
 
   useFrame(() => {
+    if (!inViewRef.current) return;
     if (groupRef.current) {
       groupRef.current.rotation.x += (pointer.y * 0.05 - groupRef.current.rotation.x) * 0.015;
       groupRef.current.rotation.y += (pointer.x * 0.08 - groupRef.current.rotation.y) * 0.015;
@@ -155,16 +110,16 @@ function SceneContent() {
       <Shape position={[2, 2.2, -5]} color={COLORS.blue} type="ico" delay={0.5} />
 
       <ParticleField />
-      <ConnectionLines />
     </group>
   );
 }
 
-export default function AboutScene() {
+export default function AboutScene({ inView = true }: { inView?: boolean }) {
   return (
     <Canvas
       camera={{ position: [0, 0, 7], fov: 60 }}
-      gl={{ antialias: true, alpha: true }}
+      gl={{ antialias: false, alpha: true }}
+      dpr={[0.5, 1]}
       style={{
         position: "absolute",
         inset: 0,
@@ -173,7 +128,7 @@ export default function AboutScene() {
         pointerEvents: "none",
       }}
     >
-      <SceneContent />
+      <SceneContent inView={inView} />
     </Canvas>
   );
 }

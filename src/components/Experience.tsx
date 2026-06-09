@@ -40,7 +40,7 @@ export default function Experience() {
 
   return (
     <section id="experience" ref={sectionRef} className="relative py-24 sm:py-32 px-4 overflow-hidden">
-      <ExperienceScene />
+      <ExperienceScene inView={isInView} />
 
       <div className="max-w-5xl mx-auto relative z-10">
         <motion.div

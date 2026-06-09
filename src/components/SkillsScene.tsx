@@ -3,8 +3,10 @@
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
 
-export default function SkillsScene() {
+export default function SkillsScene({ active = true }: { active?: boolean }) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const activeRef = useRef(active);
+  activeRef.current = active;
 
   useEffect(() => {
     const container = containerRef.current;
@@ -18,34 +20,30 @@ export default function SkillsScene() {
     const camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 100);
     camera.position.z = 14;
 
-    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: false });
     renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1));
     container.appendChild(renderer.domElement);
 
     const colors = [0x00f0ff, 0x0066ff, 0x7000ff, 0xff0080];
-    const geometries = [
-      new THREE.IcosahedronGeometry(0.6, 0),
-      new THREE.OctahedronGeometry(0.55),
-      new THREE.TorusKnotGeometry(0.45, 0.15, 32, 8),
-      new THREE.TetrahedronGeometry(0.5),
-      new THREE.DodecahedronGeometry(0.5),
-      new THREE.TorusGeometry(0.6, 0.2, 12, 24),
-    ];
 
     const shapes: THREE.Mesh[] = [];
-    for (let i = 0; i < 25; i++) {
-      const geo = geometries[i % geometries.length];
+    for (let i = 0; i < 15; i++) {
+      const type = i % 6;
+      let geo: THREE.BufferGeometry;
+      if (type === 0) geo = new THREE.IcosahedronGeometry(0.6, 0);
+      else if (type === 1) geo = new THREE.OctahedronGeometry(0.55);
+      else if (type === 2) geo = new THREE.TorusKnotGeometry(0.45, 0.15, 16, 6);
+      else if (type === 3) geo = new THREE.TetrahedronGeometry(0.5);
+      else if (type === 4) geo = new THREE.DodecahedronGeometry(0.5);
+      else geo = new THREE.TorusGeometry(0.6, 0.2, 8, 16);
+
       const col = colors[i % colors.length];
-      const mat = new THREE.MeshPhysicalMaterial({
+      const mat = new THREE.MeshBasicMaterial({
         color: col,
-        metalness: 0.3,
-        roughness: 0.4,
         transparent: true,
         opacity: 0.12 + Math.random() * 0.15,
         wireframe: Math.random() > 0.5,
-        emissive: col,
-        emissiveIntensity: 0.08,
       });
       const mesh = new THREE.Mesh(geo, mat);
 
@@ -77,26 +75,20 @@ export default function SkillsScene() {
       shapes.push(mesh);
     }
 
-    const particleCount = 500;
+    const particleCount = 250;
     const pos = new Float32Array(particleCount * 3);
-    const cols = new Float32Array(particleCount * 3);
     for (let i = 0; i < particleCount; i++) {
       pos[i * 3] = (Math.random() - 0.5) * 35;
       pos[i * 3 + 1] = (Math.random() - 0.5) * 25;
       pos[i * 3 + 2] = (Math.random() - 0.5) * 20 - 4;
-      const c = new THREE.Color(colors[Math.floor(Math.random() * colors.length)]);
-      cols[i * 3] = c.r;
-      cols[i * 3 + 1] = c.g;
-      cols[i * 3 + 2] = c.b;
     }
     const particleGeo = new THREE.BufferGeometry();
     particleGeo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
-    particleGeo.setAttribute("color", new THREE.BufferAttribute(cols, 3));
     const particleMat = new THREE.PointsMaterial({
       size: 0.06,
-      vertexColors: true,
+      color: "#00f0ff",
       transparent: true,
-      opacity: 0.5,
+      opacity: 0.3,
       blending: THREE.AdditiveBlending,
       sizeAttenuation: true,
     });
@@ -122,26 +114,28 @@ export default function SkillsScene() {
 
     let animFrame: number;
     const animate = () => {
+      animFrame = requestAnimationFrame(animate);
+      if (!activeRef.current) return;
+
       mouse.x += (mouse.tx - mouse.x) * 0.02;
       mouse.y += (mouse.ty - mouse.y) * 0.02;
 
       particles.rotation.y += 0.0004;
 
       const now = Date.now();
-      shapes.forEach((mesh) => {
-        const d = mesh.userData;
-        mesh.rotation.x += d.rotSpeed.x;
-        mesh.rotation.y += d.rotSpeed.y;
-        mesh.rotation.z += d.rotSpeed.z;
-        mesh.position.y = d.initialY + Math.sin(now * d.floatSpeed + d.phase) * d.floatAmp;
-      });
+      for (let i = 0; i < shapes.length; i++) {
+        const d = shapes[i].userData;
+        shapes[i].rotation.x += d.rotSpeed.x;
+        shapes[i].rotation.y += d.rotSpeed.y;
+        shapes[i].rotation.z += d.rotSpeed.z;
+        shapes[i].position.y = d.initialY + Math.sin(now * d.floatSpeed + d.phase) * d.floatAmp;
+      }
 
       camera.position.x += (mouse.x * 2 - camera.position.x) * 0.012;
       camera.position.y += (-mouse.y * 1.5 - camera.position.y) * 0.012;
       camera.lookAt(0, 0, 0);
 
       renderer.render(scene, camera);
-      animFrame = requestAnimationFrame(animate);
     };
     animate();
 

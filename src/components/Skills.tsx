@@ -144,7 +144,7 @@ export default function Skills() {
   return (
     <section id="skills" ref={sectionRef} className="relative py-24 sm:py-32 px-4 overflow-hidden">
       <div className="absolute inset-0 pointer-events-none">
-        <SkillsScene />
+        <SkillsScene active={isInView} />
       </div>
 
       <div className="max-w-6xl mx-auto relative z-10">

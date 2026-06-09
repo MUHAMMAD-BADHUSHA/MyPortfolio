@@ -27,14 +27,14 @@ export default function Scene3D() {
     const renderer = new THREE.WebGLRenderer({
       canvas,
       alpha: true,
-      antialias: true,
+      antialias: false,
     });
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1));
     rendererRef.current = renderer;
 
     const particlesGeo = new THREE.BufferGeometry();
-    const particleCount = 2500;
+    const particleCount = 1000;
     const positions = new Float32Array(particleCount * 3);
     const colors = new Float32Array(particleCount * 3);
     const sizes = new Float32Array(particleCount);
@@ -94,15 +94,11 @@ export default function Scene3D() {
 
     for (let i = 0; i < 12; i++) {
       const geo = geoTypes[i % geoTypes.length];
-      const mat = new THREE.MeshPhysicalMaterial({
+      const mat = new THREE.MeshBasicMaterial({
         color: shapeColors[i % shapeColors.length],
-        metalness: 0.7,
-        roughness: 0.2,
         transparent: true,
         opacity: 0.15 + Math.random() * 0.2,
         wireframe: Math.random() > 0.5,
-        emissive: shapeColors[i % shapeColors.length],
-        emissiveIntensity: 0.1,
       });
       const mesh = new THREE.Mesh(geo, mat);
 

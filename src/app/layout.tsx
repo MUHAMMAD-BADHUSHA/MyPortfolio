@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import CursorEffect from "@/components/CursorEffect";
+import LoadingScreen from "@/components/LoadingScreen";
+import Scene3DWrapper from "@/components/Scene3DWrapper";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -34,9 +36,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="h-full antialiased">
-      <body className="min-h-full bg-dark text-text font-sans">
+      <body className="min-h-full font-sans" style={{ background: "#050008", color: "#e0e0ff" }}>
+        <LoadingScreen />
+        <Scene3DWrapper />
         <CursorEffect />
-        {children}
+        <div className="relative z-10">
+          {children}
+        </div>
       </body>
     </html>
   );

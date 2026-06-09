@@ -1,7 +1,10 @@
 "use client";
 
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
+import dynamic from "next/dynamic";
 import { motion, AnimatePresence, useInView } from "framer-motion";
+
+const SkillsScene = dynamic(() => import("@/components/SkillsScene"), { ssr: false });
 
 const ReactLogo = ({ className }: { className?: string }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -138,15 +141,10 @@ export default function Skills() {
   const sectionRef = useRef<HTMLElement>(null);
   const isInView = useInView(sectionRef, { once: true, amount: 0.05 });
 
-  const techs = useMemo(
-    () => skillTechs.flatMap((cat) => cat.techs.map((t) => ({ name: t.name, color: t.color }))),
-    []
-  );
-
   return (
     <section id="skills" ref={sectionRef} className="relative py-24 sm:py-32 px-4 overflow-hidden">
       <div className="absolute inset-0 pointer-events-none">
-        <CanvasParticles techs={techs} active={isInView} />
+        <SkillsScene />
       </div>
 
       <div className="max-w-6xl mx-auto relative z-10">
@@ -256,148 +254,65 @@ function SkillCard({ tech, index, isInView }: {
   isInView: boolean;
 }) {
   const [hovered, setHovered] = useState(false);
-  const barWidth = `${60 + ((index * 17) % 35)}%`;
+  const [tilt, setTilt] = useState({ x: 0, y: 0 });
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!cardRef.current) return;
+    const rect = cardRef.current.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width;
+    const y = (e.clientY - rect.top) / rect.height;
+    setTilt({ x: (y - 0.5) * -20, y: (x - 0.5) * 20 });
+  };
+
+  const handleMouseEnter = () => setHovered(true);
+  const handleMouseLeave = () => {
+    setHovered(false);
+    setTilt({ x: 0, y: 0 });
+  };
 
   return (
     <motion.div
+      ref={cardRef}
       initial={{ opacity: 0, y: 30 }}
       animate={isInView ? { opacity: 1, y: 0 } : {}}
       transition={{ duration: 0.4, delay: 0.1 + index * 0.06 }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      className="group relative rounded-xl p-5 cursor-default transition-all duration-300 h-full flex flex-col"
+      onMouseMove={handleMouseMove}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      className="group relative rounded-xl p-6 cursor-default transition-all duration-200 h-full flex flex-col items-center justify-center"
       style={{
-        background: hovered ? `${tech.color}08` : "rgba(5,0,20,0.3)",
-        border: `1px solid ${hovered ? `${tech.color}30` : "rgba(0,240,255,0.06)"}`,
-        boxShadow: hovered ? `0 0 30px ${tech.color}15` : "none",
+        background: hovered
+          ? `linear-gradient(135deg, ${tech.color}18, rgba(5,0,20,0.5))`
+          : "rgba(5,0,20,0.3)",
+        border: `1px solid ${hovered ? `${tech.color}45` : "rgba(0,240,255,0.06)"}`,
+        boxShadow: hovered
+          ? `0 0 40px ${tech.color}25, 0 0 80px ${tech.color}10`
+          : "0 4px 20px rgba(0,0,0,0.2)",
+        transform: `perspective(600px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg) scale(${hovered ? 1.03 : 1})`,
       }}
     >
       <div
-        className="w-14 h-14 mx-auto flex items-center justify-center rounded-xl mb-4 transition-all duration-300"
+        className="w-16 h-16 flex items-center justify-center rounded-2xl mb-4 transition-all duration-500"
         style={{
-          background: hovered ? `${tech.color}20` : `${tech.color}10`,
+          background: hovered
+            ? `radial-gradient(circle at center, ${tech.color}35, ${tech.color}10)`
+            : `${tech.color}08`,
           color: tech.color,
-          transform: hovered ? "scale(1.1)" : "scale(1)",
-          boxShadow: hovered ? `0 0 20px ${tech.color}20` : "none",
+          boxShadow: hovered
+            ? `0 0 30px ${tech.color}30, inset 0 0 30px ${tech.color}10`
+            : "none",
         }}
       >
-        <div className="w-8 h-8">{tech.logo}</div>
+        <div className="w-9 h-9">{tech.logo}</div>
       </div>
 
-      <span className="block text-base font-semibold text-center transition-colors duration-300"
+      <span
+        className="block text-base font-semibold text-center transition-all duration-300"
         style={{ color: hovered ? tech.color : "rgba(224,224,255,0.8)" }}
       >
         {tech.name}
       </span>
-
-      <div className="mt-auto pt-3 h-1 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.05)" }}>
-        <motion.div
-          className="h-full rounded-full"
-          initial={{ width: 0 }}
-          animate={isInView ? { width: barWidth } : {}}
-          transition={{ duration: 1, delay: 0.3 + index * 0.06, ease: "easeOut" }}
-          style={{
-            background: `linear-gradient(90deg, ${tech.color}, ${tech.color}80)`,
-            boxShadow: hovered ? `0 0 10px ${tech.color}` : "none",
-          }}
-        />
-      </div>
     </motion.div>
-  );
-}
-
-function CanvasParticles({ techs, active }: { techs: { name: string; color: string }[]; active: boolean }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  useEffect(() => {
-    if (!active) return;
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    let animFrame: number;
-    const particles: {
-      x: number; y: number; vx: number; vy: number;
-      size: number; alpha: number; hue: number; sat: number; light: number;
-      pulse: number; pulseSpeed: number;
-    }[] = [];
-
-    const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-    resize();
-    window.addEventListener("resize", resize);
-
-    for (let i = 0; i < 80; i++) {
-      particles.push({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        vx: (Math.random() - 0.5) * 0.3,
-        vy: (Math.random() - 0.5) * 0.3,
-        size: Math.random() * 2 + 0.5,
-        alpha: Math.random() * 0.3 + 0.1,
-        hue: 0, sat: 0, light: 0,
-        pulse: Math.random() * Math.PI * 2,
-        pulseSpeed: 0.005 + Math.random() * 0.01,
-      });
-    }
-
-    const draw = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      particles.forEach((p) => {
-        p.x += p.vx;
-        p.y += p.vy;
-        p.pulse += p.pulseSpeed;
-
-        if (p.x < -10) p.x = canvas.width + 10;
-        if (p.x > canvas.width + 10) p.x = -10;
-        if (p.y < -10) p.y = canvas.height + 10;
-        if (p.y > canvas.height + 10) p.y = -10;
-
-        const alpha = p.alpha * (0.5 + 0.5 * Math.sin(p.pulse));
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(0, 240, 255, ${alpha * 0.5})`;
-        ctx.fill();
-      });
-
-      for (let i = 0; i < particles.length; i++) {
-        for (let j = i + 1; j < particles.length; j++) {
-          const a = particles[i];
-          const b = particles[j];
-          const dx = a.x - b.x;
-          const dy = a.y - b.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-
-          if (dist < 120) {
-            const alpha = (1 - dist / 120) * 0.04;
-            ctx.beginPath();
-            ctx.moveTo(a.x, a.y);
-            ctx.lineTo(b.x, b.y);
-            ctx.strokeStyle = `rgba(0, 240, 255, ${alpha})`;
-            ctx.lineWidth = 0.5;
-            ctx.stroke();
-          }
-        }
-      }
-
-      animFrame = requestAnimationFrame(draw);
-    };
-    draw();
-
-    return () => {
-      cancelAnimationFrame(animFrame);
-      window.removeEventListener("resize", resize);
-    };
-  }, [active, techs]);
-
-  return (
-    <canvas
-      ref={canvasRef}
-      className="absolute inset-0 pointer-events-none"
-    />
   );
 }
